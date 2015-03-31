@@ -7,13 +7,16 @@ package org.geoserver.wps.gs;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
 
 import java.io.IOException;
 
+import org.geoserver.catalog.CoverageStoreInfo;
 import org.geoserver.catalog.FeatureTypeInfo;
 import org.geoserver.catalog.LayerInfo;
 import org.geoserver.data.test.SystemTestData;
 import org.geoserver.wps.WPSTestSupport;
+import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.data.Query;
 import org.geotools.data.crs.ForceCoordinateSystemFeatureResults;
 import org.geotools.data.simple.SimpleFeatureCollection;
@@ -103,4 +106,21 @@ public class ImportProcessTest extends WPSTestSupport {
             assertEquals("114", f.getAttribute("FID"));
             assertEquals("215 Main Street", f.getAttribute("ADDRESS"));
 	}
+
+    /**
+     * Test creating a coverage store when a store name is specified but does not exist
+     */
+    @Test
+    public void testCreateCoverageStore() throws Exception {
+        String storeName = SystemTestData.CITE_PREFIX;
+        // use Coverage2RenderedImageAdapterTest's method, just need any sample raster
+        GridCoverage2D sampleCoverage = Coverage2RenderedImageAdapterTest.createTestCoverage(500, 500, 0,0, 10,10);
+        CoverageStoreInfo storeInfo = catalog.getCoverageStoreByName(storeName);
+        assertNull("Store already exists " + storeInfo, storeInfo);
+        ImportProcess importer = new ImportProcess(getCatalog());
+        String result = importer.execute(null, sampleCoverage, SystemTestData.CITE_PREFIX, storeName + "raster",
+                "Buildings4", CRS.decode("EPSG:4326"), null, null);
+
+        assertEquals(result, SystemTestData.CITE_PREFIX + ":" + "Buildings4");
+    }
 }
