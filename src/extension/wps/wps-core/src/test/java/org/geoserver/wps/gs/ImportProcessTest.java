@@ -12,6 +12,7 @@ import static junit.framework.Assert.assertNull;
 import java.io.IOException;
 
 import org.geoserver.catalog.CoverageStoreInfo;
+import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.catalog.FeatureTypeInfo;
 import org.geoserver.catalog.LayerInfo;
 import org.geoserver.data.test.SystemTestData;
@@ -34,6 +35,8 @@ public class ImportProcessTest extends WPSTestSupport {
     @After 
     public void removeNewLayers() {
         removeLayer(SystemTestData.CITE_PREFIX, "Buildings2");
+        removeLayer(SystemTestData.CITE_PREFIX + "raster", "Buildings4");
+        removeLayer(SystemTestData.CITE_PREFIX + "data", "Buildings5");
     }
 
     /**
@@ -112,15 +115,36 @@ public class ImportProcessTest extends WPSTestSupport {
      */
     @Test
     public void testCreateCoverageStore() throws Exception {
-        String storeName = SystemTestData.CITE_PREFIX;
+        String storeName = SystemTestData.CITE_PREFIX + "raster";
         // use Coverage2RenderedImageAdapterTest's method, just need any sample raster
         GridCoverage2D sampleCoverage = Coverage2RenderedImageAdapterTest.createTestCoverage(500, 500, 0,0, 10,10);
         CoverageStoreInfo storeInfo = catalog.getCoverageStoreByName(storeName);
         assertNull("Store already exists " + storeInfo, storeInfo);
         ImportProcess importer = new ImportProcess(getCatalog());
-        String result = importer.execute(null, sampleCoverage, SystemTestData.CITE_PREFIX, storeName + "raster",
+        String result = importer.execute(null, sampleCoverage, SystemTestData.CITE_PREFIX, storeName,
                 "Buildings4", CRS.decode("EPSG:4326"), null, null);
-
+        // expect workspace:layername
         assertEquals(result, SystemTestData.CITE_PREFIX + ":" + "Buildings4");
+    }
+
+    /**
+     * Test creating a vector store when a store name is specified but does not exist
+     */
+    @Test
+    public void testCreateDataStore() throws Exception {
+        FeatureTypeInfo ti = getCatalog().getFeatureTypeByName(getLayerId(SystemTestData.BUILDINGS));
+        SimpleFeatureCollection rawSource = (SimpleFeatureCollection) ti.getFeatureSource(null,
+                null).getFeatures();
+        ForceCoordinateSystemFeatureResults sampleData = new ForceCoordinateSystemFeatureResults(
+                rawSource, CRS.decode("EPSG:4326"));
+        String storeName = SystemTestData.CITE_PREFIX + "data";
+        DataStoreInfo storeInfo = catalog.getDataStoreByName(storeName);
+        assertNull("Store already exists " + storeInfo, storeInfo);
+        ImportProcess importer = new ImportProcess(getCatalog());
+        String result = importer.execute(sampleData, null, SystemTestData.CITE_PREFIX, storeName,
+                "Buildings5", CRS.decode("EPSG:4326"), null, null);
+        // expect workspace:layername
+        assertEquals(result, SystemTestData.CITE_PREFIX + ":" + "Buildings5");
+
     }
 }
