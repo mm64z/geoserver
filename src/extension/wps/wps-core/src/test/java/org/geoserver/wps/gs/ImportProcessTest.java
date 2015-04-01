@@ -35,8 +35,10 @@ public class ImportProcessTest extends WPSTestSupport {
     @After 
     public void removeNewLayers() {
         removeLayer(SystemTestData.CITE_PREFIX, "Buildings2");
-        removeLayer(SystemTestData.CITE_PREFIX + "raster", "Buildings4");
-        removeLayer(SystemTestData.CITE_PREFIX + "data", "Buildings5");
+        removeLayer(SystemTestData.CITE_PREFIX, "Buildings4");
+        removeLayer(SystemTestData.CITE_PREFIX, "Buildings5");
+        removeStore(SystemTestData.CITE_PREFIX, SystemTestData.CITE_PREFIX + "data");
+        removeStore(SystemTestData.CITE_PREFIX, SystemTestData.CITE_PREFIX + "raster");
     }
 
     /**
